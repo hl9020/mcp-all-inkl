@@ -27,7 +27,7 @@ const TOOLS = [
 IMPORTANT: zone_host MUST end with a trailing dot (e.g. "example.com." NOT "example.com").
 Actions:
 - list: params {zone_host} - list all DNS records of a zone
-- create: params {zone_host, record_type, record_name, record_data, record_aux} - record_name="" for zone root, record_aux=0 for most types, for MX it is the priority
+- create: params {record_aux: "0"} - record_aux must be a STRING not a number (e.g. "0"), record_name="" for zone root
 - update: params {record_id, ...fields} - modify a record (get record_id from list)
 - delete: params {record_id} - delete a record
 - reset: params {zone_host} - reset zone to defaults` + PF,
@@ -51,7 +51,7 @@ Actions:
 Actions:
 - list: no params - list all subdomains
 - create: params {subdomain_name, domain_name} - e.g. subdomain_name="www", domain_name="example.com"
-- update: params {subdomain_name, ...fields}
+- update: params {subdomain_name, ...fields} - may fail with "in_progress" right after creation, retry after a few seconds
 - delete: params {subdomain_name}
 - move: params {subdomain_name, target_kas_login}` + PF,
     actions: ["list", "create", "update", "delete", "move"],
@@ -62,8 +62,8 @@ Actions:
 Actions:
 - list: no params - list all databases
 - create: params {database_password} - name is auto-generated
-- update: params {database_name, ...fields} - e.g. database_comment, database_password
-- delete: params {database_name}` + PF,
+- update: params {database_name, database_login, ...fields} - database_login required (same value as database_name), e.g. database_comment, database_password
+- delete: params {database_name, database_login} - database_login required (same value as database_name)` + PF,
     actions: ["list", "create", "update", "delete"],
   },
   {
@@ -71,7 +71,10 @@ Actions:
     description: `Manage email: mailboxes, forwards, mailing lists, filters.
 Actions:
 - list/create/update/delete: mailboxes (params: mail_login, mail_password, ...)
-- list_forwards/create_forward/update_forward/delete_forward: email forwards
+- list_forwards: list all email forwards
+- create_forward: params {local_part, domain_part, target_0, target_1, ...} - target_N are the forward destinations (numbered from 0), e.g. target_0="user@example.com"; may fail with "fetch failed" on first attempt, retry once
+- update_forward: params {mail_forward, target_0, target_1, ...} - mail_forward is the full address e.g. "alias@example.com"; note: update may fail with "in_progress" right after creation, retry after a few seconds
+- delete_forward: params {mail_forward} - mail_forward is the full address e.g. "alias@example.com"
 - list_lists/create_list/update_list/delete_list: mailing lists
 - list_filters/add_filter/delete_filter: mail filters` + PF,
     actions: ["list", "create", "update", "delete", "list_forwards", "create_forward", "update_forward", "delete_forward", "list_lists", "create_list", "update_list", "delete_list", "list_filters", "add_filter", "delete_filter"],
@@ -81,7 +84,7 @@ Actions:
     description: `Manage cronjobs.
 Actions:
 - list: no params - list all cronjobs
-- create: params {cronjob_url OR cronjob_script, cronjob_minute, cronjob_hour, cronjob_dom, cronjob_month, cronjob_dow} - time values like crontab (* for every)
+- create: params {protocol, http_url, minute, hour, day_of_month, month, day_of_week} - protocol="https"|"http", http_url without protocol prefix, time values like crontab (* for every)
 - update: params {cronjob_id, ...fields}
 - delete: params {cronjob_id}` + PF,
     actions: ["list", "create", "update", "delete"],
