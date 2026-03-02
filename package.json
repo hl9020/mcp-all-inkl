@@ -1,6 +1,6 @@
 {
   "name": "mcp-all-inkl",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "MCP Server for All-Inkl.com hosting via KAS API",
   "license": "MIT",
   "type": "module",
