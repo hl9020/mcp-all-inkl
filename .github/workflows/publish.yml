@@ -18,6 +18,7 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
+      - run: npm install -g npm@latest
       - run: npm ci
       - run: npm run build
       - name: Bump version, publish, push back
@@ -25,5 +26,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           npm version patch -m "v%s [skip ci]"
-          npm publish --access public || echo "Version already published, skipping"
+          npm publish --access public
           git push || echo "Push failed, version published to npm"
