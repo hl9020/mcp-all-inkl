@@ -2,7 +2,7 @@
 
 MCP Server for managing [All-Inkl.com](https://all-inkl.com) web hosting via the KAS SOAP API. Gives Claude and other MCP-compatible AI assistants direct access to domains, DNS, email, databases, cronjobs, SSL, and more.
 
-**9 tools, 53 actions** - full coverage of the KAS API, with all SOAP/XML complexity abstracted into clean JSON responses.
+**14 tools, 73 actions** - full coverage of the KAS API, with all SOAP/XML complexity abstracted into clean JSON responses.
 
 ## Features
 
@@ -298,7 +298,7 @@ Manages mailboxes, forwards, mailing lists, and filters.
 
 | Action | Required Params | Description |
 |--------|----------------|-------------|
-| `update` | `hostname`, `ssl_certificate_sni_key`, `ssl_certificate_sni_crt` | Install/update SSL certificate |
+| `update` | `hostname`, `ssl_certificate_sni_key`, `ssl_certificate_sni_crt` | Install/update SSL certificate. Optional: `ssl_certificate_is_active` (`Y`/`N` - a stored certificate is only served when `Y`), `ssl_certificate_sni_bundle`, `ssl_certificate_sni_csr`, `ssl_certificate_force_https`, `ssl_certificate_hsts_max_age` |
 
 ### kas_account - Account Management
 
@@ -322,6 +322,51 @@ Manages mailboxes, forwards, mailing lists, and filters.
 | `get_space` | - | Disk space overview |
 | `get_space_usage` | `directory` | Detailed space usage for a directory |
 | `get_traffic` | - | Traffic statistics |
+| `create_symlink` | `symlink_target`, `symlink_name` | Create a symlink |
+| `chown` | `chown_path`, `chown_user`, `recursive` | Fix file ownership (`chown_user`: `phpuser` or the KAS login) |
+
+### kas_ftp - FTP Users
+
+| Action | Required Params | Description |
+|--------|----------------|-------------|
+| `list` | - | List FTP users (optional `ftp_login`) |
+| `create` | `ftp_password`, `ftp_comment` | Create FTP user (optional `ftp_path`, `ftp_permission_*`, `ftp_virus_clamav`) |
+| `update` | `ftp_login` | Update FTP user |
+| `delete` | `ftp_login` | Delete FTP user |
+
+### kas_ddns - DynDNS Users
+
+| Action | Required Params | Description |
+|--------|----------------|-------------|
+| `list` | - | List DynDNS users |
+| `create` | `dyndns_comment`, `dyndns_password`, `dyndns_zone`, `dyndns_label`, `dyndns_target_ip` | Create DynDNS user |
+| `update` | `dyndns_login` | Update DynDNS user |
+| `delete` | `dyndns_login` | Delete DynDNS user |
+
+### kas_samba - Samba Users
+
+| Action | Required Params | Description |
+|--------|----------------|-------------|
+| `list` | - | List Samba users |
+| `create` | `samba_path`, `samba_new_password`, `samba_comment` | Create Samba user |
+| `update` | `samba_login` | Update Samba user |
+| `delete` | `samba_login` | Delete Samba user |
+
+### kas_directory_protection - Password-Protected Directories
+
+| Action | Required Params | Description |
+|--------|----------------|-------------|
+| `list` | - | List protected directories (optional `directory_path`) |
+| `create` | `directory_user`, `directory_path`, `directory_password`, `directory_authname` | Protect a directory |
+| `update` | `directory_user`, `directory_path`, `directory_password`, `directory_authname` | Update protection |
+| `delete` | `directory_user`, `directory_path` | Remove protection |
+
+### kas_software - Software Installation
+
+| Action | Required Params | Description |
+|--------|----------------|-------------|
+| `list` | - | Available software with `software_id` |
+| `install` | `software_id`, `software_database`, `software_database_password`, `software_hostname`, `software_path`, `software_admin_mail`, `software_admin_user`, `software_admin_pass` | Install software |
 
 ## Example Responses
 
@@ -454,7 +499,12 @@ src/
     cronjob.ts      # Cronjobs (4 actions)
     ssl.ts          # SSL certificates (1 action)
     account.ts      # Account management (9 actions)
-    system.ts       # System info (4 actions)
+    system.ts       # System info, symlink, chown (6 actions)
+    ftp.ts          # FTP users (4 actions)
+    ddns.ts         # DynDNS users (4 actions)
+    samba.ts        # Samba users (4 actions)
+    directoryprotection.ts  # Password-protected directories (4 actions)
+    software.ts     # Software installation (2 actions)
 ```
 
 ## Known Limitations

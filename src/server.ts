@@ -14,6 +14,11 @@ import { handleCronjob } from "./tools/cronjob.js";
 import { handleSsl } from "./tools/ssl.js";
 import { handleAccount } from "./tools/account.js";
 import { handleSystem } from "./tools/system.js";
+import { handleFtp } from "./tools/ftp.js";
+import { handleDdns } from "./tools/ddns.js";
+import { handleSamba } from "./tools/samba.js";
+import { handleDirectoryProtection } from "./tools/directoryprotection.js";
+import { handleSoftware } from "./tools/software.js";
 
 const PF = `
 Optional params for all tools: "pick" (array of field names to return, reduces tokens) and "filter" (object to match, e.g. {"record_type":"MX"} returns only matching entries).`;
@@ -89,7 +94,10 @@ Actions:
   },
   {
     name: "kas_ssl",
-    description: "Manage SSL certificates. Action: update - params {domain_name, ssl_certificate_sni_crt, ssl_certificate_sni_key, ssl_certificate_sni_bundle}" + PF,
+    description: `Manage SSL certificates.
+Actions:
+- update: params {hostname, ssl_certificate_sni_key, ssl_certificate_sni_crt} - hostname is the (sub)domain, e.g. "sub.example.com"
+  optional: ssl_certificate_is_active ("Y"|"N" - a stored certificate is only served when "Y"), ssl_certificate_sni_csr, ssl_certificate_sni_bundle (intermediate), ssl_certificate_force_https ("Y"|"N", HTTP 301 to HTTPS), ssl_certificate_hsts_max_age (seconds, -1 disables)` + PF,
     actions: ["update"],
   },
   {
@@ -111,8 +119,58 @@ Actions:
 - create_session: create new auth session
 - get_space: disk space overview
 - get_space_usage: detailed space usage per directory
-- get_traffic: traffic statistics` + PF,
-    actions: ["create_session", "get_space", "get_space_usage", "get_traffic"],
+- get_traffic: traffic statistics
+- create_symlink: params {symlink_target, symlink_name}
+- chown: params {chown_path, chown_user, recursive} - chown_user "phpuser" or the KAS login (e.g. "w0123456"), recursive "Y"|"N"` + PF,
+    actions: ["create_session", "get_space", "get_space_usage", "get_traffic", "create_symlink", "chown"],
+  },
+  {
+    name: "kas_ftp",
+    description: `Manage FTP users.
+Actions:
+- list: optional params {ftp_login}
+- create: params {ftp_password, ftp_comment} - optional: ftp_path (default "/"), ftp_permission_read/ftp_permission_write/ftp_permission_list/ftp_virus_clamav ("Y"|"N", default "Y"); login is auto-generated
+- update: params {ftp_login, ...fields} - e.g. ftp_new_password, ftp_path, ftp_comment, ftp_permission_*
+- delete: params {ftp_login}` + PF,
+    actions: ["list", "create", "update", "delete"],
+  },
+  {
+    name: "kas_ddns",
+    description: `Manage DynDNS users.
+Actions:
+- list: optional params {ddns_login}
+- create: params {dyndns_comment, dyndns_password, dyndns_zone, dyndns_label, dyndns_target_ip} - zone e.g. "example.com", label e.g. "home"; optional dyndns_dual_stack
+- update: params {dyndns_login, ...fields} - e.g. dyndns_password, dyndns_comment, dyndns_dual_stack
+- delete: params {dyndns_login}` + PF,
+    actions: ["list", "create", "update", "delete"],
+  },
+  {
+    name: "kas_samba",
+    description: `Manage Samba (network drive) users.
+Actions:
+- list: optional params {samba_login}
+- create: params {samba_path, samba_new_password, samba_comment}
+- update: params {samba_login, ...fields} - e.g. samba_path, samba_new_password, samba_comment
+- delete: params {samba_login}` + PF,
+    actions: ["list", "create", "update", "delete"],
+  },
+  {
+    name: "kas_directory_protection",
+    description: `Manage password-protected directories (.htaccess/.htpasswd).
+Actions:
+- list: optional params {directory_path}
+- create: params {directory_user, directory_path, directory_password, directory_authname} - authname is the realm/comment shown in the login prompt
+- update: params {directory_user, directory_path, directory_password, directory_authname}
+- delete: params {directory_user, directory_path}` + PF,
+    actions: ["list", "create", "update", "delete"],
+  },
+  {
+    name: "kas_software",
+    description: `One-click software installation (e.g. WordPress).
+Actions:
+- list: optional params {software_id} - available software and their software_id
+- install: params {software_id, software_database, software_database_password, software_hostname, software_path, software_admin_mail, software_admin_user, software_admin_pass} - optional: software_install_example_data ("Y"|"N"), language ("de"|"en")` + PF,
+    actions: ["list", "install"],
   },
 ];
 
@@ -136,6 +194,11 @@ const handlers: Record<string, (i: ToolInput) => Promise<McpResult>> = {
   kas_ssl: handleSsl,
   kas_account: handleAccount,
   kas_system: handleSystem,
+  kas_ftp: handleFtp,
+  kas_ddns: handleDdns,
+  kas_samba: handleSamba,
+  kas_directory_protection: handleDirectoryProtection,
+  kas_software: handleSoftware,
 };
 
 export function createServer(opts: { readonly?: boolean } = {}): Server {
